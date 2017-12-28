@@ -1,0 +1,28 @@
+{
+  "name": "multislacklite",
+  "version": "1.0.0",
+  "description": "multichannel chat backend",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "multislacklite"
+  },
+  "author": "Mars Cheung",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^1.0.3",
+    "body-parser": "^1.18.2",
+    "es6-promisify": "^5.0.0",
+    "express": "^4.16.2",
+    "jsonwebtoken": "^8.1.0",
+    "mongoose": "^5.0.0-rc0",
+    "validator": "^9.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.14.3"
+  }
+}
