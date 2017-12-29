@@ -54,7 +54,7 @@ exports.login = function(req, res){
 			} else {
 				return res.json({token: jwt.sign({ email: user.email, fullName: user.firstName + ' ' + user.lastName, _id: user._id}, 'RESTFULAPIs')});
 			}
-    }
+    	}
 	});
 }
 exports.loginRequired = function(req, res, next){

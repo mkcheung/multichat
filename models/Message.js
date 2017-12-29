@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 const validator = require('validator');
 
 const messageSchema = new Schema({
-	createddate:{
+	created:{
 		type:Date,
 		default:Date.now
 	},
@@ -14,6 +14,10 @@ const messageSchema = new Schema({
 		type:mongoose.Schema.ObjectId,
 		ref:'User'
 	},
+	channel:{
+		type:mongoose.Schema.ObjectId,
+		ref:'Channel'
+	}
 });
 
 module.exports = mongoose.model('Message', messageSchema);
