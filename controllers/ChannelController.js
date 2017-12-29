@@ -1,14 +1,33 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const Channel = mongoose.model('Channel');
+const User = mongoose.model('User');
 const bcrypt = require('bcrypt');  
 const jwt = require("jsonwebtoken");
 
 exports.createChannel = (req, res) => {
 
+	let userId = ''
+	jwt.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode){
+			userId = decode._id;
+		});
+
+	// check to ensure that the requested users exist
+	User.find({
+		_id:{ $in : req.body.channelUsers  }
+	}, function(err,users){
+		if(!users){
+			res.status(401).json({ message: 'Channel users not found' });
+		} 
+	});
+
+
+	let usersToChannel = req.body.channelUsers;
+	usersToChannel.push(userId);
+
 	const newChannel = new Channel({
 		name: req.body.channelName,
-		channelUsers: req.body.channelUsers
+		channelUsers: usersToChannel
 	})
 
 	newChannel.save(function(err,channel){
