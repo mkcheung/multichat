@@ -1,19 +1,15 @@
 'use strict';
 module.exports = function(app) {
   var UserController = require('../controllers/UserController');
-
   var ChannelController = require('../controllers/ChannelController');
+  var MessageController = require('../controllers/MessageController');
 
-  // User Routes
   app.route('/')
     .get(UserController.loginRequired, UserController.testing);
 
-
-  // Token
   app.route('/token')
     .post(UserController.login);
 
-  // User Routes
   app.route('/users')
     .get(UserController.loginRequired, UserController.testing)
     .post(UserController.register);
@@ -22,5 +18,8 @@ module.exports = function(app) {
   	.get(UserController.loginRequired, ChannelController.getUserChannels)
   	.post(UserController.loginRequired, ChannelController.createChannel)
   	.patch(UserController.loginRequired, ChannelController.addUserToChannel);
+
+  app.route('/message')
+    .post(UserController.loginRequired, MessageController.createMessage);
 
 };

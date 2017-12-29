@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken");
 
 exports.createChannel = (req, res) => {
 
-	let userId = ''
+	let userId = '';
 	jwt.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode){
 			userId = decode._id;
 		});
@@ -86,7 +86,7 @@ exports.addUserToChannel = (req, res) => {
 			}, function(err,numAff, response){
 
 				if(err){
-	        	res.status(401).json({ message: 'Error addng users to channel.' });
+	        		res.status(401).json({ message: 'Error adding users to channel.' });
 				}
 				return res.json(numAff);
 			});
