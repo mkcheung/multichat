@@ -13,10 +13,6 @@ const messageSchema = new Schema({
 	user:{
 		type:mongoose.Schema.ObjectId,
 		ref:'User'
-	},
-	channel:{
-		type:mongoose.Schema.ObjectId,
-		ref:'Channel'
 	}
 });
 

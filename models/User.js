@@ -29,19 +29,7 @@ const userSchema = new Schema({
 	created: {
 		type:Date,
 		default:Date.now
-	},
-	messages:[
-		{
-			type: mongoose.Schema.ObjectId,
-			ref:'Message'
-		}
-	],
-	channels:[
-		{
-			type:mongoose.Schema.ObjectId,
-			ref:'Channel'
-		},
-	],
+	}
 	resetPasswordToken: String,
 	resetPasswordExpires: Date,
 });
