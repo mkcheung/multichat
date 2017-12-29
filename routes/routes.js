@@ -20,6 +20,7 @@ module.exports = function(app) {
 
   app.route('/channel')
   	.get(UserController.loginRequired, ChannelController.getUserChannels)
-  	.post(UserController.loginRequired, ChannelController.createChannel);
+  	.post(UserController.loginRequired, ChannelController.createChannel)
+  	.patch(UserController.loginRequired, ChannelController.addUserToChannel);
 
 };

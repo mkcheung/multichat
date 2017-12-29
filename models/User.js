@@ -29,7 +29,7 @@ const userSchema = new Schema({
 	created: {
 		type:Date,
 		default:Date.now
-	}
+	},
 	resetPasswordToken: String,
 	resetPasswordExpires: Date,
 });

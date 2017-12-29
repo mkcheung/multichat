@@ -56,3 +56,42 @@ exports.getUserChannels = (req, res) => {
     	}
 	});
 }
+
+exports.addUserToChannel = (req, res) => {
+
+
+	Channel.findOne({
+		_id:req.body.channelId
+	}, function(err,channel){
+		if(!channel){
+			res.status(401).json({ message: 'Channel not found' });
+		} else if (channel) {
+
+			// check to ensure that the requested users exist
+			User.find({
+				_id:{ $in : req.body.userIds  }
+			}, function(err,users){
+				if(!users){
+					res.status(401).json({ message: 'Channel users not found' });
+				} 
+			});
+
+			let newUsers = channel.channelUsers;
+			newUsers.push(req.body.userIds);
+
+			Channel.update({
+				_id: req.body.channelId
+			},{
+				channelUsers:newUsers
+			}, function(err,numAff, response){
+
+				if(err){
+	        	res.status(401).json({ message: 'Error addng users to channel.' });
+				}
+				return res.json(numAff);
+			});
+
+
+    	}
+	});
+}
