@@ -5,13 +5,13 @@ module.exports = function(app) {
   var MessageController = require('../controllers/MessageController');
 
   app.route('/')
-    .get(UserController.loginRequired, UserController.testing);
+    .get(UserController.loginRequired, UserController.getAllUsers);
 
   app.route('/token')
     .post(UserController.login);
 
   app.route('/users')
-    .get(UserController.loginRequired, UserController.testing)
+    .get(UserController.loginRequired, UserController.getAllUsers)
     .post(UserController.register);
 
   app.route('/channel')

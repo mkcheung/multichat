@@ -4,8 +4,14 @@ const bcrypt = require('bcrypt');
 const promisify = require('es6-promisify');
 const jwt = require("jsonwebtoken");
 
-exports.testing = (req, res) => {
-	console.log('right here');
+exports.getAllUsers = (req, res) => {
+	User.find({}, function(err,users){
+		if(!users){
+			res.status(401).json({ message: 'No users.' });
+		} else if (users) {
+			return res.json(users);
+    	}
+	});
 }
 
 exports.register = (req, res) => {
@@ -42,6 +48,7 @@ exports.login = function(req, res){
 
 	let authFailedMsg = 'Bad credentials. User not found.';
 
+		console.log(req.body.email);
 	User.findOne({
 		email:req.body.email
 	}, function(err,user){

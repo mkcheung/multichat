@@ -3,12 +3,15 @@ var express = require('express'),
   port = process.env.PORT || 3000,
   bodyParser = require('body-parser'),
   jwt = require("jsonwebtoken"),
+  cors = require('cors'),
   mongoose = require('mongoose'); // needed to connect to the database
 
 // load the specific model
 require('./models/User'); 
 require('./models/Channel'); 
 require('./models/Message'); 
+
+app.use(cors());
 
 // mongoose instance connection url connection
 mongoose.Promise = global.Promise;
