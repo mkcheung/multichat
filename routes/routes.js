@@ -24,5 +24,7 @@ module.exports = function(app) {
 
   app.route('/message')
     .post(UserController.loginRequired, MessageController.createMessage);
+  app.route('/messages/getMessagesInChannel')
+    .get(UserController.loginRequired, MessageController.getMessagesInChannel);
 
 };
