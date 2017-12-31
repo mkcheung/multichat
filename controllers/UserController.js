@@ -25,12 +25,12 @@ exports.register = (req, res) => {
 	});
 
 	newUser.save(function(err, user) {
-    if (err){
-      return res.status(400).send(err);
-    }
+	    if (err){
+	      return res.status(400).send(err);
+	    }
 
-    return res.json(user);
-  });
+	    return res.json(user);
+	  });
 	// const register = promisify(User.register, User);
 
 	// register(user, req.body.password).then(function(results){
@@ -48,7 +48,6 @@ exports.login = function(req, res){
 
 	let authFailedMsg = 'Bad credentials. User not found.';
 
-		console.log(req.body.email);
 	User.findOne({
 		email:req.body.email
 	}, function(err,user){

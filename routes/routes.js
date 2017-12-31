@@ -19,6 +19,9 @@ module.exports = function(app) {
   	.post(UserController.loginRequired, ChannelController.createChannel)
   	.patch(UserController.loginRequired, ChannelController.addUserToChannel);
 
+  app.route('/channels/getChannel')
+  	.get(UserController.loginRequired, ChannelController.getChannel)
+
   app.route('/message')
     .post(UserController.loginRequired, MessageController.createMessage);
 

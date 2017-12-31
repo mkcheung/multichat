@@ -21,6 +21,10 @@ const channelSchema = new Schema({
 			ref:'Message'
 		}
 	],
+	type:{
+		type:String,
+		required:"Channel type required."
+	},
 	created:{
 		type:Date,
 		default:Date.now

@@ -4,6 +4,7 @@ const Channel = mongoose.model('Channel');
 const User = mongoose.model('User');
 const bcrypt = require('bcrypt');  
 const jwt = require("jsonwebtoken");
+const url = require('url');
 
 exports.createChannel = (req, res) => {
 
@@ -27,7 +28,8 @@ exports.createChannel = (req, res) => {
 
 	const newChannel = new Channel({
 		name: req.body.channelName,
-		channelUsers: usersToChannel
+		channelUsers: usersToChannel,
+		type:"oneOnOne"
 	})
 
 	newChannel.save(function(err,channel){
@@ -53,6 +55,47 @@ exports.getUserChannels = (req, res) => {
 			res.status(401).json({ message: 'User has no channels' });
 		} else if (channels) {
 			return res.json(channels);
+    	}
+	});
+}
+
+exports.getChannel = (req, res) => {
+
+	let userId = ''
+	jwt.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode){
+			userId = decode._id;
+			userEmail = decode.email;
+		});
+
+	let url_parts = url.parse(req.url, true);
+	let queryString = url_parts.query;
+
+	Channel.findOne({
+		channelUsers:[userId,queryString.message_user_ids],
+		type:'oneOnOne'
+	}, function(err,channel){
+		if(!channel){
+			
+			let directedUser = User.findOne({
+				_id:req.body.message_user_ids
+			});
+
+			let usersToChannel = [userId,queryString.message_user_ids];
+
+			const newChannel = new Channel({
+				name: userEmail+' To '+queryString.channelName,
+				channelUsers: usersToChannel,
+				type:"oneOnOne"
+			})
+
+			newChannel.save(function(err,channel){
+				if(err){
+					return res.status(400).send(err);
+				}
+				return res.json(channel);
+			});
+		} else if (channel) {
+			return res.json(channel);
     	}
 	});
 }
