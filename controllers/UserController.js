@@ -5,7 +5,13 @@ const promisify = require('es6-promisify');
 const jwt = require("jsonwebtoken");
 
 exports.getAllUsers = (req, res) => {
-	User.find({}, function(err,users){
+
+	let userId = '';
+	jwt.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode){
+			userId = decode._id;
+		});
+
+	User.find({"_id":{$ne: userId }}, function(err,users){
 		if(!users){
 			res.status(401).json({ message: 'No users.' });
 		} else if (users) {
