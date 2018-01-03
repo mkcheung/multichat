@@ -69,9 +69,12 @@ exports.getChannel = (req, res) => {
 
 	let url_parts = url.parse(req.url, true);
 	let queryString = url_parts.query;
-
+	
 	Channel.findOne({
-		channelUsers:[userId,queryString.message_user_ids],
+		channelUsers:{
+			"$size" : 2,
+			"$all" : [userId,queryString.message_user_ids]
+		},
 		type:'oneOnOne'
 	}, function(err,channel){
 		if(!channel){
