@@ -11,7 +11,7 @@ exports = module.exports = function (io) {
 
     socket.on('leave conversation', (conversation) => {
       socket.leave(conversation);
-      // console.log('left ' + conversation);
+      console.log('left ' + conversation);
     });
 
     socket.on('new message', (conversation) => {

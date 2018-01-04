@@ -16,4 +16,12 @@ const messageSchema = new Schema({
 	}
 });
 
+
+function autopopulate(next){
+	this.populate('user');
+	next();
+}
+
+messageSchema.pre('find',autopopulate);
+messageSchema.pre('findOne', autopopulate);
 module.exports = mongoose.model('Message', messageSchema);
