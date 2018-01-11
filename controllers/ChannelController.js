@@ -153,6 +153,35 @@ exports.getChannel = (req, res) => {
 	});
 }
 
+exports.getGroupChannel = (req, res) => {
+
+	let userId = ''
+	jwt.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode){
+			userId = decode._id;
+			userEmail = decode.email;
+		});
+
+	let url_parts = url.parse(req.url, true);
+	let queryString = url_parts.query;
+
+	Channel.findOne(
+	{ 
+		'$and': 
+		[ 
+			{
+				_id: queryString.groupChannelId,
+				type:'group'  
+			}
+		] 
+	}
+	, function(err,channel){
+		if(!channel){
+			return res.status(401).send("Group channel not found.");
+		} 
+		return res.json(channel);
+	});
+}
+
 exports.addUserToChannel = (req, res) => {
 
 

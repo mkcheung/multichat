@@ -25,6 +25,9 @@ module.exports = function(app) {
   app.route('/channels/getGroupChannels')
   	.get(UserController.loginRequired, ChannelController.getGroupChannels)
 
+  app.route('/channels/getGroupChannel')
+  	.get(UserController.loginRequired, ChannelController.getGroupChannel)
+
   app.route('/message')
     .post(UserController.loginRequired, MessageController.createMessage);
   app.route('/messages/getMessagesInChannel')
