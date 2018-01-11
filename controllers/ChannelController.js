@@ -18,7 +18,7 @@ exports.createChannel = (req, res) => {
 		_id:{ $in : req.body.channelUsers  }
 	}, function(err,users){
 		if(!users){
-			res.status(401).json({ message: 'Channel users not found' });
+			res.status(401).json({ message: 'Channel users not found.' });
 		} 
 	});
 
@@ -29,7 +29,7 @@ exports.createChannel = (req, res) => {
 	const newChannel = new Channel({
 		name: req.body.channelName,
 		channelUsers: usersToChannel,
-		type:"oneOnOne"
+		type:req.body.type
 	})
 
 	newChannel.save(function(err,channel){
@@ -53,6 +53,33 @@ exports.getUserChannels = (req, res) => {
 	}, function(err,channels){
 		if(!channels){
 			res.status(401).json({ message: 'User has no channels' });
+		} else if (channels) {
+			return res.json(channels);
+    	}
+	});
+}
+
+exports.getGroupChannels = (req, res) => {
+
+	let userId = ''
+	jwt.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode){
+			userId = decode._id;
+		});
+
+	Channel.find(
+	{ 
+		'$and': 
+		[ 
+			{
+				channelUsers: {
+					"$in" : [userId]
+				},
+				type:'group'  
+			}
+		] 
+	} , function(err,channels){
+		if(!channels){
+			res.status(401).json({ message: 'No group channels' });
 		} else if (channels) {
 			return res.json(channels);
     	}
