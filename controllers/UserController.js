@@ -37,17 +37,6 @@ exports.register = (req, res) => {
 
 	    return res.json(user);
 	  });
-	// const register = promisify(User.register, User);
-
-	// register(user, req.body.password).then(function(results){
-	// 	console.log('user saved');
-
-	// }).catch(function(err){
-	// 	console.log('alert');
-	// });
-
-	// await register(user, req.body.password);
-	// next();
 }
 
 exports.login = function(req, res){

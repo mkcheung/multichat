@@ -31,4 +31,11 @@ const channelSchema = new Schema({
 	},
 });
 
+function autopopulate(next){
+	this.populate('messages');
+	next();
+}
+
+channelSchema.pre('find',autopopulate);
+channelSchema.pre('findOne', autopopulate);
 module.exports = mongoose.model('Channel', channelSchema);

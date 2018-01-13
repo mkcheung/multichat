@@ -64,19 +64,15 @@ exports.getMessagesInChannel = (req, res) => {
 
 	let url_parts = url.parse(req.url, true);
 	let queryString = url_parts.query;
-	// check to ensure that the requested users exist
+
 	Channel.findOne({
 		_id:queryString.channelId
 	}, function(err,channel){
 		if(!channel){
 			res.status(401).json({ message: 'Channel messages not found' });
 		} 
-		Message.find({"_id": {$in : channel.messages} },function(err, messages){
-			if(err){
-        		res.status(401).json({ message: 'Error with channel message query.' });
-			}
-			return res.json(messages);
-		});
+
+		return res.json(channel.messages);
 	});
 } 
 
