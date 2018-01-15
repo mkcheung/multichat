@@ -99,32 +99,16 @@ exports.getChannel = (req, res) => {
 
 	Channel.findOne(
 	{ 
-		'$or': 
-		[ 
+		'$and': 
+	    [ 
 			{ 
-				'$and': 
-			    [ 
-					{ 
-						channelUsers: {
-							"$size" : 2,
-							"$all" : [userId,queryString.message_user_ids]
-						},
-						type:'oneOnOne' 
-					} 
-			    ] 
-			},
-			{ 
-				'$and': 
-				[ 
-					{
-						channelUsers: {
-							"$in" : [userId]
-						},
-						type:'group'  
-					}
-				] 
+				channelUsers: {
+					"$size" : 2,
+					"$all" : [userId,queryString.message_user_ids]
+				},
+				type:'oneOnOne' 
 			} 
-		] 
+	    ] 
 	}
 	, function(err,channel){
 		if(!channel){
@@ -145,7 +129,10 @@ exports.getChannel = (req, res) => {
 				if(err){
 					return res.status(400).send(err);
 				}
-				return res.json(channel);
+				Channel.populate(channel, { path: 'channelUsers'}, function (err, channel) {
+					return res.json(channel);
+				});
+				
 			});
 		} else if (channel) {
 			return res.json(channel);
