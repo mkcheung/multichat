@@ -33,6 +33,7 @@ const channelSchema = new Schema({
 
 function autopopulate(next){
 	this.populate('messages');
+	this.populate('channelUsers');
 	next();
 }
 
