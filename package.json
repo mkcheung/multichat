@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "multichannel chat backend",
   "main": "index.js",
+  "now":{
+    "dotenv": "variables.env"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon server.js"
