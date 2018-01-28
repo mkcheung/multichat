@@ -30,6 +30,7 @@ const userSchema = new Schema({
 		type:Date,
 		default:Date.now
 	},
+	loggedIn: Boolean,
 	resetPasswordToken: String,
 	resetPasswordExpires: Date,
 });

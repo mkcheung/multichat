@@ -45,23 +45,6 @@ app.use(function(req,res,next){
 const routes = require('./routes/routes');
 routes(app); //register the route
 
-
-// // Run server to listen on port 3000.
-// const server = app.listen(port, () => {
-//   console.log('listening on *:3000');
-// });
-// const io = require('socket.io')(server);
-// // Set socket.io listeners.
-// io.on('connection', (socket) => {
-//   console.log('a user connected');
- 
-//   socket.on('disconnect', () => {
-//     console.log('user disconnected');
-//   });
-// });
-
-// console.log('todo list RESTful API server started on: ' + port);
-
 const server = http.createServer(app);
 const io = socketIo(server);
 
