@@ -7,8 +7,9 @@ const User = mongoose.model('User');
 exports = module.exports = function (io) {
   // Set socket.io listeners.
   io.on('connection', (socket) => {
-    // console.log(io.sockets);
-
+    
+    console.log("New client connected", socket.id);
+    console.log(' %s sockets connected', io.engine.clientsCount);
 
     socket.on('loggedIn', (userId) => {
       let loggedInUserId = userId;
@@ -31,7 +32,7 @@ exports = module.exports = function (io) {
 
     });
 
-    socket.on('loggedOut', (userId) => {
+    socket.on('logged out', (userId) => {
       let loggedOutUserId = userId;
       let currentUser = User.findById(loggedOutUserId, function(err,user){
         if(err){
@@ -68,6 +69,7 @@ exports = module.exports = function (io) {
 
     socket.on('disconnect', () => {
       console.log('user disconnected');
+      console.log("disconnect: ", socket.id);
     });
   });
 };

@@ -39,19 +39,11 @@ app.use(function(req,res,next){
 	}
 });
 
-
-// app.listen(port);
-
 const routes = require('./routes/routes');
 routes(app); //register the route
 
 const server = http.createServer(app);
 const io = socketIo(server);
-
-io.on("connection", socket => {
-  console.log("New client connected");
-  socket.on("disconnect", () => console.log("Client disconnected"));
-});
 
 server.listen(port, () => console.log(`Listening on port ${port}`));
 
