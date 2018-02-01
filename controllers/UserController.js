@@ -11,7 +11,7 @@ exports.getAllUsers = (req, res) => {
 			userId = decode._id;
 		});
 
-	User.find({"_id":{$ne: userId }}, function(err,users){
+	User.find({}, function(err,users){
 		if(!users){
 			res.status(401).json({ message: 'No users.' });
 		} else if (users) {
@@ -27,6 +27,7 @@ exports.register = (req, res) => {
 		email:req.body.email,
 		firstName: req.body.firstName,
 		lastName: req.body.lastName,
+		loggedIn: false,
 		hashPassword: hashedPw
 	});
 
@@ -53,7 +54,7 @@ exports.login = function(req, res){
 			if (!user.comparePassword(req.body.password)) {
 	        	res.status(401).json({ message: authFailedMsg });
 			} else {
-				return res.json({token: jwt.sign({ email: user.email, fullName: user.firstName + ' ' + user.lastName, _id: user._id}, 'RESTFULAPIs')});
+				return res.json({userid:user._id ,token: jwt.sign({ email: user.email, fullName: user.firstName + ' ' + user.lastName, _id: user._id}, 'RESTFULAPIs')});
 			}
     	}
 	});
