@@ -23,8 +23,23 @@ mongoose.connect('mongodb://kuanyin:ueshiba1883@ds127783.mlab.com:27783/mkcheung
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+
+// app.use(function(req, res, next) {
+// 	res.header("Access-Control-Allow-Origin", 'https://slackliteclient-cpiqivkyky.now.sh'); 
+// 	res.header("Access-Control-Allow-Credentials", true);
+// 	res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+// 	res.header("Access-Control-Allow-Headers", 'Origin,X-Requested-With,Content-Type,Accept,content-type,application/json,Authorization');
+// 	next();
+});
+
 // kick off the middleware to make sure we have the token within the header
 app.use(function(req,res,next){
+	
+	res.header("Access-Control-Allow-Origin", 'https://slackliteclient-cpiqivkyky.now.sh'); 
+	res.header("Access-Control-Allow-Credentials", true);
+	res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+	res.header("Access-Control-Allow-Headers", 'Origin,X-Requested-With,Content-Type,Accept,content-type,application/json,Authorization');
+	
 	if(req.headers && req.headers.authorization && req.headers.authorization.split(' ')[0] === 'JWT'){
 		jwt.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode){
 			if(err){
