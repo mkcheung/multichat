@@ -35,7 +35,7 @@ app.use(bodyParser.json());
 // kick off the middleware to make sure we have the token within the header
 app.use(function(req,res,next){
 	
-	res.header("Access-Control-Allow-Origin", 'https://slackliteclient-cpiqivkyky.now.sh'); 
+	res.header("Access-Control-Allow-Origin", 'https://mkcheung-multichatclient.now.sh'); 
 	res.header("Access-Control-Allow-Credentials", true);
 	res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
 	res.header("Access-Control-Allow-Headers", 'Origin,X-Requested-With,Content-Type,Accept,content-type,application/json,Authorization');
