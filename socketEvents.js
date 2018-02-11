@@ -67,6 +67,11 @@ exports = module.exports = function (io) {
       io.sockets.in(conversation).emit('refresh messages', conversation);
     });
 
+    socket.on('new group', () => {
+      console.log('new group created');
+      io.emit('refresh groups');
+    });
+
     socket.on('disconnect', () => {
       console.log('user disconnected');
       console.log("disconnect: ", socket.id);
