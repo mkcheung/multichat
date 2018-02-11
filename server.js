@@ -34,11 +34,11 @@ app.use(bodyParser.json());
 
 // kick off the middleware to make sure we have the token within the header
 app.use(function(req,res,next){
-	
-	res.header("Access-Control-Allow-Origin", 'https://mkcheung-multichatclient.now.sh'); 
-	res.header("Access-Control-Allow-Credentials", true);
-	res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-	res.header("Access-Control-Allow-Headers", 'Origin,X-Requested-With,Content-Type,Accept,content-type,application/json,Authorization');
+
+	res.setHeader("Access-Control-Allow-Origin", '*'); 
+	res.setHeader("Access-Control-Allow-Credentials", true);
+	res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+	res.setHeader("Access-Control-Allow-Headers", 'Origin,X-Requested-With,Content-Type,Accept,content-type,application/json,Authorization');
 	
 	if(req.headers && req.headers.authorization && req.headers.authorization.split(' ')[0] === 'JWT'){
 		jwt.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode){
