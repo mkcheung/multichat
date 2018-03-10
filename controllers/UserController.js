@@ -50,9 +50,8 @@ exports.login = function(req, res){
 		if(!user){
 			res.status(401).json({ message: authFailedMsg });
 		} else if (user) {
-
 			if (!user.comparePassword(req.body.password)) {
-	        	res.status(401).json({ message: authFailedMsg });
+	        	return res.status(401).json({ message: authFailedMsg });
 			} else {
 				return res.json({userid:user._id ,token: jwt.sign({ email: user.email, fullName: user.firstName + ' ' + user.lastName, _id: user._id}, 'RESTFULAPIs')});
 			}

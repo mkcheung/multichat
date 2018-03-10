@@ -1,8 +1,10 @@
 
 
 require('./models/User'); 
+require('./models/Channel'); 
 const mongoose = require('mongoose');
 const User = mongoose.model('User');
+const Channel = mongoose.model('Channel');
 
 exports = module.exports = function (io) {
   // Set socket.io listeners.
@@ -62,13 +64,24 @@ exports = module.exports = function (io) {
       console.log('left ' + conversation);
     });
 
-    socket.on('new message', (conversation) => {
-      console.log('new message ' + conversation);
+    socket.on('new message', (conversation, senderId) => {
       io.sockets.in(conversation).emit('refresh messages', conversation);
+      let currentChannel = Channel.findById(conversation, function(err,channel){
+          if(err){
+            // res.status(401).json({ message: 'No users.' });
+          } 
+          let userIdsInChannel = new Array();
+          const channelUsers = channel.channelUsers;
+          for (let i=0 ; i < channelUsers.length; i++){
+            if(senderId != channelUsers[i]._id){
+              userIdsInChannel.push(channelUsers[i]._id);
+            }
+          }
+          io.emit('signal message', userIdsInChannel);
+      });
     });
 
     socket.on('new group', () => {
-      console.log('new group created');
       io.emit('refresh groups');
     });
 
