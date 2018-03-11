@@ -19,7 +19,7 @@ app.use(cors());
 // mongoose instance connection url connection
 mongoose.Promise = global.Promise;
 //set up the connection to the database
-mongoose.connect('mongodb://kuanyin:ueshiba1883@ds127783.mlab.com:27783/mkcheungmongodb'); 
+mongoose.connect('mongodb://localhost/multichat'); 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
