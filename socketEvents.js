@@ -77,7 +77,8 @@ exports = module.exports = function (io) {
               userIdsInChannel.push(channelUsers[i]._id);
             }
           }
-          io.emit('signal message', userIdsInChannel);
+          console.log(senderId);
+          io.emit('signal message', userIdsInChannel, senderId);
       });
     });
 
