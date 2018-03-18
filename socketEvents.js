@@ -68,6 +68,7 @@ exports = module.exports = function (io) {
       io.sockets.in(conversation).emit('refresh messages', conversation);
       let currentChannel = Channel.findById(conversation, function(err,channel){
           if(err){
+            console.log('error');
             // res.status(401).json({ message: 'No users.' });
           } 
           let userIdsInChannel = new Array();

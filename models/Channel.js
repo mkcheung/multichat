@@ -40,7 +40,7 @@ const channelSchema = new Schema({
 function autopopulate(next){
 	this.populate('messages');
 	this.populate('channelUsers');
-	this.populate('userMsgCount');
+	// this.populate('userMsgCount');
 	next();
 }
 
