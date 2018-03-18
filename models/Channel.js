@@ -15,6 +15,12 @@ const channelSchema = new Schema({
 			ref:'User'
 		}
 	],
+	userMsgCount:[
+		{
+			type:mongoose.Schema.ObjectId,
+			ref:'MsgCount'
+		}
+	],
 	messages:[
 		{
 			type:mongoose.Schema.ObjectId,
@@ -34,6 +40,7 @@ const channelSchema = new Schema({
 function autopopulate(next){
 	this.populate('messages');
 	this.populate('channelUsers');
+	this.populate('userMsgCount');
 	next();
 }
 

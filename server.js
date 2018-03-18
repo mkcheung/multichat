@@ -13,6 +13,7 @@ var express = require('express'),
 require('./models/User'); 
 require('./models/Channel'); 
 require('./models/Message'); 
+require('./models/MsgCount'); 
 
 app.use(cors());
 
