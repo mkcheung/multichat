@@ -69,87 +69,36 @@ exports.createMessage = (req, res, next) => {
 		},
 		function(callback){	
 			let allChannelUsers = selectedChannel.channelUsers;
-			let allChannelUserMessageCount = selectedChannel.userMsgCount;
-			if( allChannelUserMessageCount.length == 0 ){
 
-				async.each(allChannelUsers, function (user, callback){ 
-					if(user._id != userId){
-						let msgCount = new MsgCount({
-							sender: userId,
-							recipient: user._id,
-							channel: selectedChannel._id,
-							messageCount:1
-						});
+			MsgCount.find({
+				channel:req.body.channelId
+			}, function(err,channelMsgCounts){
+                if (err) return callback(err);
+                //Check that a user was found
+                if (!channelMsgCounts) {
+                    return callback(new Error('Channel Message Counts not found.'));
+                }
 
-						msgCount.save(function(err, msgCount){
-							if(err){
-								return res.status(400).send(err);
-							}
-							msgCountId = msgCount._id;
+				async.forEach(channelMsgCounts, function (msgCount, callback){ 
 
-							allChannelUserMessageCount.push(msgCountId);
+					if(msgCount.recipient != userId){
+						let numMessagesToUser = msgCount.messageCount;
+						numMessagesToUser++;
 
-							Channel.update({
-								_id: req.body.channelId
-							},{
-								userMsgCount:allChannelUserMessageCount
-							}, function(err, response){
-								if (err) return callback(err);
-				                if (!response) {
-				                    return callback(new Error('Channel message count update unsuccessful.'));
-				                }
-
-				                let currUserMsgCount = user.userMsgCount;
-								currUserMsgCount.push(msgCountId);
-								User.update({
-									_id: currentUser._id
-								},{
-									userMsgCount: currUserMsgCount
-								}, function(userErr, userresponse){
-
-									if (userErr) return callback(userErr);
-					                if (!userresponse) {
-					                    return callback(new Error('Channel message count update unsuccessful.'));
-					                }
-									callback();
-								});
-
-							});
+						MsgCount.update({
+							_id: msgCount._id
+						},{
+							messageCount:numMessagesToUser
+						}, function(err, response){
+							if (err) return callback(err);
+			                if (!response) {
+			                    return callback(new Error('Channel message count update unsuccessful.'));
+			                }
+							callback();
 						});
 					}
 				});
-			} else {
-
-				MsgCount.find({
-					channel:req.body.channelId
-				}, function(err,channelMsgCounts){
-	                if (err) return callback(err);
-	                //Check that a user was found
-	                if (!channelMsgCounts) {
-	                    return callback(new Error('Channel Message Counts not found.'));
-	                }
-
-					async.forEach(channelMsgCounts, function (msgCount, callback){ 
-
-						if(msgCount.recipient != userId){
-							let numMessagesToUser = msgCount.messageCount;
-							numMessagesToUser++;
-
-							MsgCount.update({
-								_id: msgCount._id
-							},{
-								messageCount:numMessagesToUser
-							}, function(err, response){
-								if (err) return callback(err);
-				                if (!response) {
-				                    return callback(new Error('Channel message count update unsuccessful.'));
-				                }
-								callback();
-							});
-						}
-					});
-	            });
-			}
+            });
 			callback();
 		},
 		function(callback){

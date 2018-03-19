@@ -2,9 +2,11 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const Channel = mongoose.model('Channel');
 const User = mongoose.model('User');
+const MsgCount = mongoose.model('MsgCount');
 const bcrypt = require('bcrypt');  
 const jwt = require("jsonwebtoken");
 const url = require('url');
+var async = require('async');
 
 exports.createChannel = (req, res) => {
 
@@ -111,6 +113,12 @@ exports.getChannel = (req, res) => {
 	    ] 
 	}
 	, function(err,channel){
+
+		let newChannel = '';
+		let msgCountSaved1 = '';
+		let msgCountSaved2 = '';
+		let allChannelUserMessageCount = [];
+
 		if(!channel){
 			
 			let directedUser = User.findOne({
@@ -119,21 +127,106 @@ exports.getChannel = (req, res) => {
 
 			let usersToChannel = [userId,queryString.message_user_ids];
 
-			const newChannel = new Channel({
-				name: userEmail+' To '+queryString.channelName,
-				channelUsers: usersToChannel,
-				type:"oneOnOne"
-			})
 
-			newChannel.save(function(err,channel){
+			async.series([
+				function(callback){
+					const newChannelInDevelopment = new Channel({
+						name: userEmail+' To '+queryString.channelName,
+						channelUsers: usersToChannel,
+						type:"oneOnOne"
+					});
+					newChannelInDevelopment.save(function(err,channel){
+						if(err){
+							return res.status(400).send(err);
+						}
+						Channel.populate(channel, { path: 'channelUsers'}, function (err, channel) {
+							newChannel = channel
+                			callback();
+						});
+					});
+				},
+				function(callback){
+					let msgCount = new MsgCount({
+						sender: userId,
+						recipient: queryString.message_user_ids,
+						channel: newChannel._id,
+						messageCount:0
+					});
+					let msgCount2 = new MsgCount({
+						sender: queryString.message_user_ids,
+						recipient: userId,
+						channel: newChannel._id,
+						messageCount:0
+					});
+
+					msgCount.save(function(err, msgCount){
+						if(err){
+							return res.status(400).send(err);
+						}
+						allChannelUserMessageCount.push(msgCount._id);
+
+						msgCountSaved1 = msgCount;
+
+						msgCount2.save(function(err2, msgCount2){
+							if(err2){
+								return res.status(400).send(err2);
+							}
+							allChannelUserMessageCount.push(msgCount2._id);
+							msgCountSaved2 = msgCount2;
+
+                			callback();
+                		});
+					});
+				},
+				function(callback){
+					Channel.update({
+						_id: newChannel._id
+					},{
+						userMsgCount:allChannelUserMessageCount
+					}, function(err, response){
+						if (err) return callback(err);
+		                if (!response) {
+		                    return callback(new Error('Channel message count update unsuccessful.'));
+		                }
+
+		                let userMsgCountToSave = [msgCountSaved1._id]
+						User.update({
+							_id: userId
+						},{
+							userMsgCount: userMsgCountToSave
+						}, function(userErr, userresponse){
+
+							if (userErr) return callback(userErr);
+			                if (!userresponse) {
+			                    return callback(new Error('Channel message count update unsuccessful.'));
+			                }
+
+		                	let userMsgCountToSave2 = [msgCountSaved2._id]
+
+							User.update({
+								_id: queryString.message_user_ids
+							},{
+								userMsgCount: userMsgCountToSave2
+							}, function(userErr2, userresponse2){
+
+								if (userErr2) return callback(userErr2);
+				                if (!userresponse2) {
+				                    return callback(new Error('Channel message count update unsuccessful.'));
+				                }
+                				callback();
+                			});
+						});
+					});
+				},
+			], function(err, response) {
 				if(err){
-					return res.status(400).send(err);
-				}
-				Channel.populate(channel, { path: 'channelUsers'}, function (err, channel) {
-					return res.json(channel);
-				});
-				
+					// res.status(401).json({ message: 'Error with channel message input.' });
+					return next(err);
+				}							
+				return res.json(newChannel);
 			});
+
+
 		} else if (channel) {
 			return res.json(channel);
     	}
