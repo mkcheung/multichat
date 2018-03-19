@@ -30,12 +30,26 @@ const userSchema = new Schema({
 		type:Date,
 		default:Date.now
 	},
+	userMsgCount:[
+		{
+			type:mongoose.Schema.ObjectId,
+			ref:'MsgCount'
+		}
+	],
 	loggedIn: Boolean,
 	resetPasswordToken: String,
 	resetPasswordExpires: Date,
 });
+
+function autopopulate(next){
+	this.populate('userMsgCount');
+	next();
+}
 userSchema.methods.comparePassword = function(password) {
 	return bcrypt.compareSync(password,this.hashPassword);
 };
+
+userSchema.pre('find',autopopulate);
+userSchema.pre('findOne', autopopulate);
 
 module.exports = mongoose.model('User', userSchema);

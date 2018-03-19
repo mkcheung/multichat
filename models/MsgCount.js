@@ -3,7 +3,11 @@ const Schema = mongoose.Schema;
 const validator = require('validator');
 
 const MsgCountSchema = new Schema({
-	user:{
+	sender:{
+		type:mongoose.Schema.ObjectId,
+		ref:'User'
+	},
+	recipient:{
 		type:mongoose.Schema.ObjectId,
 		ref:'User'
 	},
@@ -16,12 +20,4 @@ const MsgCountSchema = new Schema({
 	}
 });
 
-function autopopulate(next){
-	this.populate('user');
-	this.populate('channel');
-	next();
-}
-
-MsgCountSchema.pre('find',autopopulate);
-MsgCountSchema.pre('findOne', autopopulate);
 module.exports = mongoose.model('MsgCount', MsgCountSchema);

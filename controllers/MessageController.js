@@ -75,7 +75,8 @@ exports.createMessage = (req, res, next) => {
 				async.each(allChannelUsers, function (user, callback){ 
 					if(user._id != userId){
 						let msgCount = new MsgCount({
-							user: user._id,
+							sender: userId,
+							recipient: user._id,
 							channel: selectedChannel._id,
 							messageCount:1
 						});
@@ -97,7 +98,22 @@ exports.createMessage = (req, res, next) => {
 				                if (!response) {
 				                    return callback(new Error('Channel message count update unsuccessful.'));
 				                }
-								callback();
+
+				                let currUserMsgCount = user.userMsgCount;
+								currUserMsgCount.push(msgCountId);
+								User.update({
+									_id: currentUser._id
+								},{
+									userMsgCount: currUserMsgCount
+								}, function(userErr, userresponse){
+
+									if (userErr) return callback(userErr);
+					                if (!userresponse) {
+					                    return callback(new Error('Channel message count update unsuccessful.'));
+					                }
+									callback();
+								});
+
 							});
 						});
 					}
@@ -115,7 +131,7 @@ exports.createMessage = (req, res, next) => {
 
 					async.forEach(channelMsgCounts, function (msgCount, callback){ 
 
-						if(msgCount.user != userId){
+						if(msgCount.recipient != userId){
 							let numMessagesToUser = msgCount.messageCount;
 							numMessagesToUser++;
 
