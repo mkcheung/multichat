@@ -228,7 +228,28 @@ exports.getChannel = (req, res) => {
 
 
 		} else if (channel) {
-			return res.json(channel);
+
+			MsgCount.find({
+				channel:channel._id,
+				recipient: userId
+			}, function(err, msgCountFromSender){
+				console.log(msgCountFromSender);
+                if (err) return callback(err);
+
+				MsgCount.update({
+					_id: msgCountFromSender[0]._id
+				},{
+					messageCount:0
+				}, function(err, response){
+					if (err) return callback(err);
+	                if (!response) {
+	                    return callback(new Error('Channel message count update unsuccessful.'));
+	                }
+					return res.json(channel);
+				});
+
+            });
+
     	}
 	});
 }
