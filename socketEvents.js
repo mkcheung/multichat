@@ -78,8 +78,15 @@ exports = module.exports = function (io) {
               userIdsInChannel.push(channelUsers[i]._id);
             }
           }
-          console.log(senderId);
-          io.emit('signal message', userIdsInChannel, senderId);
+
+          let activeUsers = User.find({}, function(err,activeUsers){
+            if(err){
+              // res.status(401).json({ message: 'No users.' });
+            } 
+            io.emit('refresh users', activeUsers);
+            io.emit('signal message', userIdsInChannel, senderId);
+          });
+
       });
     });
 
