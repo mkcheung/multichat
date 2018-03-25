@@ -25,22 +25,62 @@ exports.createChannel = (req, res) => {
 	});
 
 
+	let createdGroupChannel = '';
+	let msgCountSaved1 = '';
+	let allChannelUserMessageCount = [];
 	let usersToChannel = req.body.channelUsers;
 	usersToChannel.push(userId);
 
-	const newChannel = new Channel({
-		name: req.body.channelName,
-		channelUsers: usersToChannel,
-		type:req.body.type
-	})
+	async.series([
+		function(callback){
 
-	newChannel.save(function(err,channel){
-		if(err){
-			return res.status(400).send(err);
-		}
+			const newChannel = new Channel({
+				name: req.body.channelName,
+				channelUsers: usersToChannel,
+				type:req.body.type
+			});
 
-		return res.json(channel);
+			newChannel.save(function(err,channel){
+				if(err){
+					return res.status(400).send(err);
+				}
+				createdGroupChannel = channel;
+				let msgCount = new MsgCount({
+					channel: createdGroupChannel._id,
+					messageCount:0
+				});
+
+				msgCount.save(function(msgCountErr, msgCount){
+					if(msgCountErr){
+						return res.status(400).send(msgCountErr);
+					}
+					msgCountSaved1 = msgCount;
+                	callback();
+				});
+			});
+		},
+		function(callback){	
+
+			allChannelUserMessageCount.push(msgCountSaved1._id);
+			Channel.update({
+				_id: createdGroupChannel._id
+			},{
+				userMsgCount:allChannelUserMessageCount
+			}, function(err, response){
+				if(err){
+					return res.status(400).send(msgCountErr);
+				}
+            	callback();
+			});
+		},
+	], function(err, response) {
+			if(err){
+				return next(err);
+			}							
+
+		return res.json(createdGroupChannel);	
 	});
+
 } 
 
 exports.getUserChannels = (req, res) => {
