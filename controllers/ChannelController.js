@@ -26,7 +26,6 @@ exports.createChannel = (req, res) => {
 
 
 	let createdGroupChannel = '';
-	let msgCountSaved1 = '';
 	let allChannelUserMessageCount = [];
 	let usersToChannel = req.body.channelUsers;
 	usersToChannel.push(userId);
@@ -45,7 +44,15 @@ exports.createChannel = (req, res) => {
 					return res.status(400).send(err);
 				}
 				createdGroupChannel = channel;
+        		callback();
+			});
+		},
+		function(callback){
+
+			async.forEach(usersToChannel, function (user, callback){
+
 				let msgCount = new MsgCount({
+					sender: user,
 					channel: createdGroupChannel._id,
 					messageCount:0
 				});
@@ -54,14 +61,22 @@ exports.createChannel = (req, res) => {
 					if(msgCountErr){
 						return res.status(400).send(msgCountErr);
 					}
-					msgCountSaved1 = msgCount;
+					allChannelUserMessageCount.push(msgCount._id);
                 	callback();
 				});
+			}, function(err) {
+			    // if any of the file processing produced an error, err would equal that error
+			    if( err ) {
+			      // One of the iterations produced an error.
+			      // All processing will now stop.
+			      console.log('A file failed to process');
+			    } else {
+					console.log('All files have been processed successfully');
+        			callback();
+			    }
 			});
 		},
 		function(callback){	
-
-			allChannelUserMessageCount.push(msgCountSaved1._id);
 			Channel.update({
 				_id: createdGroupChannel._id
 			},{
@@ -77,7 +92,6 @@ exports.createChannel = (req, res) => {
 			if(err){
 				return next(err);
 			}							
-
 		return res.json(createdGroupChannel);	
 	});
 
