@@ -78,19 +78,37 @@ exports.createMessage = (req, res, next) => {
 	                if (!groupMsgCount) {
 	                    return callback(new Error('Group Channel Message Count not found.'));
 	                }
-					let numMessagesToGroup = groupMsgCount.messageCount;
-					numMessagesToGroup++;
 
-					MsgCount.update({
-						_id: groupMsgCount._id
-					},{
-						messageCount:numMessagesToGroup
-					}, function(err, response){
-						if (err) return callback(err);
-		                if (!response) {
-		                    return callback(new Error('Group Channel Message Count update unsuccessful.'));
-		                }
-						callback();
+					async.forEach(groupMsgCount, function (msgCount, callback){
+
+						let currentMsgCount = msgCount.messageCount;
+						currentMsgCount++;
+						
+						if(msgCount.sender != userId){
+
+							MsgCount.update({
+								_id: msgCount._id
+							},{
+								messageCount:currentMsgCount
+							}, function(err, response){
+								if (err) return callback(err);
+				                if (!response) {
+				                    return callback(new Error('Group Channel Message Count update unsuccessful.'));
+				                }
+								callback();
+							});
+						}
+
+					}, function(err) {
+					    // if any of the file processing produced an error, err would equal that error
+					    if( err ) {
+					      // One of the iterations produced an error.
+					      // All processing will now stop.
+					      console.log('A file failed to process');
+					    } else {
+							console.log('All files have been processed successfully');
+		        			callback();
+					    }
 					});
 				});
 			},
@@ -161,10 +179,13 @@ exports.createMessage = (req, res, next) => {
 	                }
 
 					async.forEach(channelMsgCounts, function (msgCount, callback){ 
-
 						if(msgCount.recipient != userId){
 							let numMessagesToUser = msgCount.messageCount;
 							numMessagesToUser++;
+						console.log(msgCount._id);
+						console.log(msgCount.channel);
+						console.log(msgCount.recipient);
+						console.log(numMessagesToUser);
 
 							MsgCount.update({
 								_id: msgCount._id
@@ -211,18 +232,63 @@ exports.createMessage = (req, res, next) => {
 
 exports.getMessagesInChannel = (req, res) => {
 
+	let userId = ''
+	jwt.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode){
+		userId = decode._id;
+		userEmail = decode.email;
+	});
+	
 	let url_parts = url.parse(req.url, true);
 	let queryString = url_parts.query;
+	let selectedChannel = '';
+
 	try{
 
-		Channel.findOne({
-			_id:queryString.channelId
-		}, function(err,channel){
-			if(!channel){
-				res.status(401).json({ message: 'Channel messages not found' });
-			} 
+		async.series([
+			function(callback){
+				Channel.findOne({
+					_id:queryString.channelId
+					}, function(err,channel){
+						if(!channel){
+							res.status(401).json({ message: 'Channel messages not found' });
+						} 
 
-			return res.json(channel.messages);
+						// return res.json(channel.messages);
+						selectedChannel = channel;
+			            callback();
+					});
+				},
+			function(callback){
+				MsgCount.findOne({
+					channel:selectedChannel._id,
+					sender:userId
+				}, function(err, msgCount){
+	                if (err) return callback(err);
+	                //Check that a user was found
+	                if (!msgCount) {
+	                    return callback(new Error('Group Channel Message Counts not found.'));
+	                }
+
+					MsgCount.update({
+						channel:selectedChannel._id,
+						sender:userId
+					},{
+						messageCount:0
+					}, function(err, response){
+						if (err) return callback(err);
+		                if (!response) {
+		                    return callback(new Error('Group Channel Message Count update unsuccessful.'));
+		                }
+						callback();
+					});
+				});
+			},
+		], function(err, response) {
+			if(err){
+				// res.status(401).json({ message: 'Error with channel message input.' });
+				return next(err);
+			}							
+			return res.json(selectedChannel.messages);
 		});
 	} catch (err){
 	}

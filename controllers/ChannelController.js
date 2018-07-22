@@ -152,7 +152,6 @@ exports.getChannel = (req, res) => {
 
 	let url_parts = url.parse(req.url, true);
 	let queryString = url_parts.query;
-
 	Channel.findOne(
 	{ 
 		'$and': 
@@ -165,8 +164,7 @@ exports.getChannel = (req, res) => {
 				type:'oneOnOne' 
 			} 
 	    ] 
-	}
-	, function(err,channel){
+	}, function(err,channel){
 
 		let newChannel = '';
 		let msgCountSaved1 = '';
@@ -282,12 +280,11 @@ exports.getChannel = (req, res) => {
 
 
 		} else if (channel) {
-
 			MsgCount.find({
 				channel:channel._id,
-				recipient: userId
+				sender: userId,
+				recipient: queryString.message_user_ids
 			}, function(err, msgCountFromSender){
-				console.log(msgCountFromSender);
                 if (err) return callback(err);
 
 				MsgCount.update({
@@ -312,9 +309,9 @@ exports.getGroupChannel = (req, res) => {
 
 	let userId = ''
 	jwt.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode){
-			userId = decode._id;
-			userEmail = decode.email;
-		});
+		userId = decode._id;
+		userEmail = decode.email;
+	});
 
 	let url_parts = url.parse(req.url, true);
 	let queryString = url_parts.query;
