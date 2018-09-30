@@ -21,6 +21,7 @@ exports.createMessage = (req, res, next) => {
 	let savedMessage = '';
 	let msgCountId = '';
 	let msgCount = '';
+	let msgCount_1on1 = '';
 
 	if(req.body.channelType == 'group') {
 		async.series([
@@ -111,13 +112,13 @@ exports.createMessage = (req, res, next) => {
 					    }
 					});
 				});
+				callback();
 			},
 		], function(err, numAff, response) {
 			if(err){
 				// res.status(401).json({ message: 'Error with channel message input.' });
 				return next(err);
 			}							
-
 			return res.json(numAff);	
 		});
 	} else {
@@ -166,43 +167,6 @@ exports.createMessage = (req, res, next) => {
 	                callback();
 	            });
 			},
-			function(callback){	
-				let allChannelUsers = selectedChannel.channelUsers;
-
-				MsgCount.find({
-					channel:req.body.channelId
-				}, function(err,channelMsgCounts){
-	                if (err) return callback(err);
-	                //Check that a user was found
-	                if (!channelMsgCounts) {
-	                    return callback(new Error('Channel Message Counts not found.'));
-	                }
-
-					async.forEach(channelMsgCounts, function (msgCount, callback){ 
-						if(msgCount.recipient != userId){
-							let numMessagesToUser = msgCount.messageCount;
-							numMessagesToUser++;
-						console.log(msgCount._id);
-						console.log(msgCount.channel);
-						console.log(msgCount.recipient);
-						console.log(numMessagesToUser);
-
-							MsgCount.update({
-								_id: msgCount._id
-							},{
-								messageCount:numMessagesToUser
-							}, function(err, response){
-								if (err) return callback(err);
-				                if (!response) {
-				                    return callback(new Error('Channel message count update unsuccessful.'));
-				                }
-								callback();
-							});
-						}
-					});
-	            });
-				callback();
-			},
 			function(callback){
 				let allChannelMessages = selectedChannel.messages;
 				allChannelMessages.push(savedMessage._id);
@@ -218,13 +182,43 @@ exports.createMessage = (req, res, next) => {
 					callback();
 				});
 			},
+			function(callback){	
+
+				MsgCount.findOne({
+					channel:req.body.channelId,
+					sender:userId
+				}, function(err,oneOnOneMsgCount){
+	                if (err) return callback(err);
+	                //Check that a user was found
+	                if (!oneOnOneMsgCount) {
+	                    return callback(new Error('No oneOnOne MsgCount found.'));
+	                }
+	                msgCount_1on1 = oneOnOneMsgCount;
+	                callback();
+				})
+			},
+			function(callback){	
+
+				let numMessagesToUser = msgCount_1on1.messageCount;
+				numMessagesToUser++;
+				MsgCount.update({
+					_id: msgCount_1on1._id
+				},{
+					messageCount:numMessagesToUser
+				}, function(err, response){
+					if (err) return callback(err);
+	                if (!response) {
+	                    return callback(new Error('Channel message count update unsuccessful.'));
+	                }
+					callback();
+				});
+			},
 
 		], function(err, numAff, response) {
 			if(err){
 				// res.status(401).json({ message: 'Error with channel message input.' });
 				return next(err);
 			}							
-
 			return res.json(numAff);	
 		});
 	}
@@ -237,7 +231,7 @@ exports.getMessagesInChannel = (req, res) => {
 		userId = decode._id;
 		userEmail = decode.email;
 	});
-	
+
 	let url_parts = url.parse(req.url, true);
 	let queryString = url_parts.query;
 	let selectedChannel = '';
@@ -258,31 +252,31 @@ exports.getMessagesInChannel = (req, res) => {
 			            callback();
 					});
 				},
-			function(callback){
-				MsgCount.findOne({
-					channel:selectedChannel._id,
-					sender:userId
-				}, function(err, msgCount){
-	                if (err) return callback(err);
-	                //Check that a user was found
-	                if (!msgCount) {
-	                    return callback(new Error('Group Channel Message Counts not found.'));
-	                }
+			// function(callback){
+			// 	MsgCount.findOne({
+			// 		channel:selectedChannel._id,
+			// 		sender:userId
+			// 	}, function(err, msgCount){
+	  //               if (err) return callback(err);
+	  //               //Check that a user was found
+	  //               if (!msgCount) {
+	  //                   return callback(new Error('Group Channel Message Counts not found.'));
+	  //               }
 
-					MsgCount.update({
-						channel:selectedChannel._id,
-						sender:userId
-					},{
-						messageCount:0
-					}, function(err, response){
-						if (err) return callback(err);
-		                if (!response) {
-		                    return callback(new Error('Group Channel Message Count update unsuccessful.'));
-		                }
-						callback();
-					});
-				});
-			},
+			// 		MsgCount.update({
+			// 			channel:selectedChannel._id,
+			// 			sender:userId
+			// 		},{
+			// 			messageCount:0
+			// 		}, function(err, response){
+			// 			if (err) return callback(err);
+		 //                if (!response) {
+		 //                    return callback(new Error('Group Channel Message Count update unsuccessful.'));
+		 //                }
+			// 			callback();
+			// 		});
+			// 	});
+			// },
 		], function(err, response) {
 			if(err){
 				// res.status(401).json({ message: 'Error with channel message input.' });
@@ -293,4 +287,36 @@ exports.getMessagesInChannel = (req, res) => {
 	} catch (err){
 	}
 } 
+
+
+
+exports.resetMessageCount = (req, res) => {
+
+	jwt.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode){
+			userId = decode._id;
+			userEmail = decode.email;
+		});
+
+	MsgCount.findOne({
+		_id:req.body.msgCountId
+	}, function(err,msgCount){
+		if(!msgCount){
+			res.status(401).json({ message: 'MsgCount not found' });
+		} else if (msgCount) {
+
+			MsgCount.update({
+				_id: req.body.msgCountId
+			},{
+				messageCount:0
+			}, function(err, response){
+				if(err){
+	        		res.status(401).json({ message: 'Error resetting message count.' });
+				}
+				return res.json(response);
+			});
+
+
+    	}
+	});
+}
 

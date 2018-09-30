@@ -66,6 +66,7 @@ exports = module.exports = function (io) {
 
     socket.on('new message', (conversation, senderId) => {
       io.sockets.in(conversation).emit('refresh messages', conversation);
+      // io.sockets.in(conversation).emit('refresh msgCount', conversation, senderId);
       let currentChannel = Channel.findById(conversation, function(err,channel){
           if(err){
             console.log('error');
@@ -92,6 +93,16 @@ exports = module.exports = function (io) {
 
     socket.on('new group', () => {
       io.emit('refresh groups');
+    });
+
+    socket.on('reset Users', () => {
+      let activeUsers = User.find({}, function(err,activeUsers){
+        if(err){
+          // res.status(401).json({ message: 'No users.' });
+        } 
+        console.log('reset users called');
+        io.emit('refresh users', activeUsers);
+      });
     });
 
     socket.on('disconnect', () => {

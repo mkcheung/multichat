@@ -32,5 +32,9 @@ module.exports = function(app) {
     .post(UserController.loginRequired, MessageController.createMessage);
   app.route('/messages/getMessagesInChannel')
     .get(UserController.loginRequired, MessageController.getMessagesInChannel);
+  // app.route('/messages/getMessageCount')
+  //   .get(UserController.loginRequired, MessageController.getMessageCount);
+  app.route('/messages/resetMessageCount')
+    .post(UserController.loginRequired, MessageController.resetMessageCount);
 
 };
