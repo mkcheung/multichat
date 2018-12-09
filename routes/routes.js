@@ -3,6 +3,7 @@ module.exports = function(app) {
   var UserController = require('../controllers/UserController');
   var ChannelController = require('../controllers/ChannelController');
   var MessageController = require('../controllers/MessageController');
+  var MsgCountController = require('../controllers/MsgCountController');
 
   app.route('/')
     .get(UserController.loginRequired, UserController.getAllUsers);
@@ -37,4 +38,6 @@ module.exports = function(app) {
   app.route('/messages/resetMessageCount')
     .post(UserController.loginRequired, MessageController.resetMessageCount);
 
+  app.route('/msgCount')
+    .get(UserController.loginRequired, MsgCountController.getAllMsgCounts)
 };

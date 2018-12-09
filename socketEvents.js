@@ -65,7 +65,7 @@ exports = module.exports = function (io) {
     });
 
     socket.on('new message', (conversation, senderId) => {
-      io.sockets.in(conversation).emit('refresh messages', conversation);
+      io.sockets.in(conversation).emit('refresh messages', conversation, senderId);
       // io.sockets.in(conversation).emit('refresh msgCount', conversation, senderId);
       let currentChannel = Channel.findById(conversation, function(err,channel){
           if(err){
@@ -84,6 +84,10 @@ exports = module.exports = function (io) {
             if(err){
               // res.status(401).json({ message: 'No users.' });
             } 
+            // console.log(activeUsers[2].userMsgCount[0].messageCount);
+            // for ( var key in activeUsers){
+            //   console.log(activeUsers[key].userMsgCount);
+            // }
             io.emit('refresh users', activeUsers);
             io.emit('signal message', userIdsInChannel, senderId);
           });

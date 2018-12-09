@@ -297,26 +297,52 @@ exports.resetMessageCount = (req, res) => {
 			userEmail = decode.email;
 		});
 
-	MsgCount.findOne({
-		_id:req.body.msgCountId
-	}, function(err,msgCount){
-		if(!msgCount){
-			res.status(401).json({ message: 'MsgCount not found' });
-		} else if (msgCount) {
 
-			MsgCount.update({
-				_id: req.body.msgCountId
-			},{
-				messageCount:0
-			}, function(err, response){
-				if(err){
-	        		res.status(401).json({ message: 'Error resetting message count.' });
-				}
-				return res.json(response);
-			});
+	if(req.body.msgCountId){
+		MsgCount.findOne({
+			_id:req.body.msgCountId
+		}, function(err,msgCount){
+			if(!msgCount){
+				res.status(401).json({ message: 'MsgCount not found' });
+			} else if (msgCount) {
 
+				MsgCount.update({
+					_id: req.body.msgCountId
+				},{
+					messageCount:0
+				}, function(err, response){
+					if(err){
+		        		res.status(401).json({ message: 'Error resetting message count.' });
+					}
+					return res.json(response);
+				});
+	    	}
+		});
+	} else if (req.body.channelId && req.body.recipientId){
+		console.log(req.body.channelId);
+		console.log(req.body.recipientId);
+		MsgCount.findOne({
+			channel:req.body.channelId,
+			recipient:req.body.recipientId
+		}, function(err,msgCount){
+			if(!msgCount){
+				res.status(401).json({ message: 'MsgCount not found' });
+			} else if (msgCount) {
 
-    	}
-	});
+				MsgCount.update({
+					channel:req.body.channelId,
+					recipient:req.body.recipientId
+				},{
+					messageCount:0
+				}, function(err, response){
+					if(err){
+		        		res.status(401).json({ message: 'Error resetting message count.' });
+					}
+					return res.json(response);
+				});
+	    	}
+		});
+	}
+
 }
 
