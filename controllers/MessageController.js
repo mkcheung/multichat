@@ -165,7 +165,7 @@ exports.createMessage = async(req, res, next) => {
 	}
 } 
 
-exports.getMessagesInChannel = (req, res) => {
+exports.getMessagesInChannel = async (req, res) => {
 
 	let userId = ''
 	jwt.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode){
@@ -179,53 +179,16 @@ exports.getMessagesInChannel = (req, res) => {
 
 	try{
 
-		async.series([
-			function(callback){
-				Channel.findOne({
-					_id:queryString.channelId
-					}, function(err,channel){
-						if(!channel){
-							res.status(401).json({ message: 'Channel messages not found' });
-						} 
+		const selectedChannel = await Channel.findOne({ _id:queryString.channelId });
 
-						// return res.json(channel.messages);
-						selectedChannel = channel;
-			            callback();
-					});
-				},
-			// function(callback){
-			// 	MsgCount.findOne({
-			// 		channel:selectedChannel._id,
-			// 		sender:userId
-			// 	}, function(err, msgCount){
-	  //               if (err) return callback(err);
-	  //               //Check that a user was found
-	  //               if (!msgCount) {
-	  //                   return callback(new Error('Group Channel Message Counts not found.'));
-	  //               }
+		if(!selectedChannel){
+			res.status(401).json({ message: 'Channel messages not found' });
+		} 
+		return res.json(selectedChannel.messages);
 
-			// 		MsgCount.update({
-			// 			channel:selectedChannel._id,
-			// 			sender:userId
-			// 		},{
-			// 			messageCount:0
-			// 		}, function(err, response){
-			// 			if (err) return callback(err);
-		 //                if (!response) {
-		 //                    return callback(new Error('Group Channel Message Count update unsuccessful.'));
-		 //                }
-			// 			callback();
-			// 		});
-			// 	});
-			// },
-		], function(err, response) {
-			if(err){
-				// res.status(401).json({ message: 'Error with channel message input.' });
-				return next(err);
-			}							
-			return res.json(selectedChannel.messages);
-		});
 	} catch (err){
+		console.error(err);
+		console.log(err);
 	}
 } 
 
