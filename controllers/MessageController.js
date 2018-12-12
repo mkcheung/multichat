@@ -24,63 +24,41 @@ exports.createMessage = async(req, res, next) => {
 	let msgCount_1on1 = '';
 
 	if(req.body.channelType == 'group') {
-		async.series([
-			function(callback){
-				Channel.findOne({
-					_id:req.body.channelId
-				}, function(err,channel){
-	                if (err){
-	                	return callback(err);
-	                } 
 
-	                //Check that a user was found
-	                if (!channel) {
-	                    return callback(new Error('No Channel found.'));
-	                }
-	                selectedChannel = channel;
-	                callback();
-	            });
-			},
-			function(callback){
-				User.findOne({
-					_id:userId
-				}, function(err,user){
-	                if (err) return callback(err);
-	                //Check that a user was found
-	                if (!user) {
-	                    return callback(new Error('No User found.'));
-	                }
-	                currentUser = user;
-	                callback();
-	            });
-			},
-			function(callback){
-				const newMessage = new Message({
-					message: req.body.message,
-					user: currentUser
-				});
 
-				newMessage.save(function(err,message){
-					if (err) return callback(err);
-	                if (!message) {
-	                    return callback(new Error('Message save unsuccessful.'));
-	                }
-	                savedMessage = message;
-	                callback();
-	            });
-			},
-			function(callback){	
+		try {
 
-				MsgCount.find({
-					channel:req.body.channelId
-				}, function(err,groupMsgCount){
-	                if (err) return callback(err);
-	                //Check that a user was found
-	                if (!groupMsgCount) {
-	                    return callback(new Error('Group Channel Message Count not found.'));
-	                }
+			const selectedChannel = await Channel.findOne({ _id:req.body.channelId });
 
-					async.forEach(groupMsgCount, function (msgCount, callback){
+            if (!selectedChannel) {
+                throw new Error('No Channel found.');
+            }
+
+			const currentUser = await User.findOne({ _id:userId });
+
+            if (!currentUser) {
+                throw new Error('No User found.');
+            }
+
+			const newMessage = new Message({
+				message: req.body.message,
+				user: currentUser
+			});
+
+			const savedMessage = await newMessage.save();
+
+			const groupMsgCountResp = await MsgCount.find({
+				channel:req.body.channelId
+			});
+            if (!groupMsgCountResp) {
+                throw new Error('Group Channel Message Count not found.');
+            }
+
+            const groupMsgCount = groupMsgCountResp.data;
+
+			async.series([
+				function(callback){	
+					async.forEach(groupMsgCount, async function (msgCount, callback){
 
 						let currentMsgCount = msgCount.messageCount;
 						currentMsgCount++;
@@ -111,16 +89,18 @@ exports.createMessage = async(req, res, next) => {
 		        			callback();
 					    }
 					});
-				});
-				callback();
-			},
-		], function(err, numAff, response) {
-			if(err){
-				// res.status(401).json({ message: 'Error with channel message input.' });
-				return next(err);
-			}							
-			return res.json(numAff);	
-		});
+					callback();
+				}
+			], function(err, numAff, response) {
+				if(err){
+					// res.status(401).json({ message: 'Error with channel message input.' });
+					return next(err);
+				}							
+				return res.json(numAff);	
+			});
+		} catch(error) {
+            console.log(error);
+		}
 	} else {
 
 		try {
