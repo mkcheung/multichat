@@ -4,23 +4,27 @@ const bcrypt = require('bcrypt');
 const promisify = require('es6-promisify');
 const jwt = require("jsonwebtoken");
 
-exports.getAllUsers = (req, res) => {
+exports.getAllUsers = async (req, res) => {
 
 	let userId = '';
 	jwt.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode){
 			userId = decode._id;
 		});
 
-	User.find({}, function(err,users){
+	try {
+
+		const users = await User.find({});
 		if(!users){
 			res.status(401).json({ message: 'No users.' });
-		} else if (users) {
+		} else {
 			return res.json(users);
-    	}
-	});
+		}
+	} catch (error) {
+		return res.status(400).send(error);
+	}
 }
 
-exports.register = (req, res) => {
+exports.register = async (req, res) => {
 	let hashedPw = bcrypt.hashSync(req.body.password, 10);
 
 	const newUser = new User({
@@ -31,32 +35,35 @@ exports.register = (req, res) => {
 		hashPassword: hashedPw
 	});
 
-	newUser.save(function(err, user) {
-	    if (err){
-	      return res.status(400).send(err);
-	    }
+	try {
 
-	    return res.json(user);
-	  });
+		const newUserResult = await newUser.save();
+		return res.json(newUserResult);
+	} catch (error) {
+		return res.status(400).send(error);
+	}
 }
 
-exports.login = function(req, res){
+exports.login = async (req, res) => {
 
 	let authFailedMsg = 'Bad credentials. User not found.';
 
-	User.findOne({
-		email:req.body.email
-	}, function(err,user){
-		if(!user){
-			res.status(401).json({ message: authFailedMsg });
-		} else if (user) {
-			if (!user.comparePassword(req.body.password)) {
-	        	return res.status(401).json({ message: authFailedMsg });
-			} else {
-				return res.json({userid:user._id ,token: jwt.sign({ email: user.email, fullName: user.firstName + ' ' + user.lastName, _id: user._id}, 'RESTFULAPIs')});
-			}
-    	}
-	});
+	try {
+
+		const userToLogIn = await User.findOne({ email:req.body.email });
+		if(!userToLogIn){
+			return res.status(401).json({ message: authFailedMsg });
+		}
+
+		if (!userToLogIn.comparePassword(req.body.password)) {
+        	return res.status(401).json({ message: authFailedMsg });
+		} else {
+			return res.json({userid:userToLogIn._id ,token: jwt.sign({ email: userToLogIn.email, fullName: userToLogIn.firstName + ' ' + userToLogIn.lastName, _id: userToLogIn._id}, 'RESTFULAPIs')});
+		}
+
+	} catch (error) {
+		return res.status(400).send(error);
+	}
 }
 exports.loginRequired = function(req, res, next){
 	if(req.user){
