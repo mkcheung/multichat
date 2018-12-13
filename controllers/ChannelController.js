@@ -142,7 +142,7 @@ exports.getGroupChannels = async (req, res) => {
 	}
 }
 
-exports.getChannel = (req, res) => {
+exports.getChannel = async (req, res) => {
 
 	let userId = ''
 	jwt.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode){
@@ -151,158 +151,137 @@ exports.getChannel = (req, res) => {
 		});
 
 	let url_parts = url.parse(req.url, true);
-	let queryString = url_parts.query;
-	Channel.findOne(
-	{ 
-		'$and': 
-	    [ 
-			{ 
-				channelUsers: {
-					"$size" : 2,
-					"$all" : [userId,queryString.message_user_ids]
-				},
-				type:'oneOnOne' 
-			} 
-	    ] 
-	}, function(err,channel){
+	let queryString = url_parts.query;	
+	let allChannelUserMessageCount = [];
 
-		let newChannel = '';
-		let msgCountSaved1 = '';
-		let msgCountSaved2 = '';
-		let allChannelUserMessageCount = [];
+	try {
 
-		if(!channel){
+		const channel = await Channel.findOne(
+		{ 
+			'$and': 
+		    [ 
+				{ 
+					channelUsers: {
+						"$size" : 2,
+						"$all" : [userId,queryString.message_user_ids]
+					},
+					type:'oneOnOne' 
+				} 
+		    ] 
+		});
+
+	    if (!channel) {
 			
-			let directedUser = User.findOne({
+			let directedUser = await User.findOne({
 				_id:req.body.message_user_ids
 			});
 
 			let usersToChannel = [userId,queryString.message_user_ids];
 
+			const newChannelInDevelopment = new Channel({
+				name: userEmail+' To '+queryString.channelName,
+				channelUsers: usersToChannel,
+				type:"oneOnOne"
+			});
 
-			async.series([
-				function(callback){
-					const newChannelInDevelopment = new Channel({
-						name: userEmail+' To '+queryString.channelName,
-						channelUsers: usersToChannel,
-						type:"oneOnOne"
-					});
-					newChannelInDevelopment.save(function(err,channel){
-						if(err){
-							return res.status(400).send(err);
-						}
-						Channel.populate(channel, { path: 'channelUsers'}, function (err, channel) {
-							newChannel = channel
-                			callback();
-						});
-					});
-				},
-				function(callback){
-					let msgCount = new MsgCount({
-						sender: userId,
-						recipient: queryString.message_user_ids,
-						channel: newChannel._id,
-						messageCount:0
-					});
-					let msgCount2 = new MsgCount({
-						sender: queryString.message_user_ids,
-						recipient: userId,
-						channel: newChannel._id,
-						messageCount:0
-					});
+			const channel = await newChannelInDevelopment.save();
 
-					msgCount.save(function(err, msgCount){
-						if(err){
-							return res.status(400).send(err);
-						}
-						allChannelUserMessageCount.push(msgCount._id);
+	    	if (!channel) {
+	    		throw new Error('Could not create new channel');
+	    	}
 
-						msgCountSaved1 = msgCount;
+			const newChannel = await Channel.populate(channel, { path: 'channelUsers' });
 
-						msgCount2.save(function(err2, msgCount2){
-							if(err2){
-								return res.status(400).send(err2);
-							}
-							allChannelUserMessageCount.push(msgCount2._id);
-							msgCountSaved2 = msgCount2;
+			let msgCount = new MsgCount({
+				sender: userId,
+				recipient: queryString.message_user_ids,
+				channel: newChannel._id,
+				messageCount:0
+			});
 
-                			callback();
-                		});
-					});
-				},
-				function(callback){
-					Channel.update({
-						_id: newChannel._id
-					},{
-						userMsgCount:allChannelUserMessageCount
-					}, function(err, response){
-						if (err) return callback(err);
-		                if (!response) {
-		                    return callback(new Error('Channel message count update unsuccessful.'));
-		                }
-
-		                let userMsgCountToSave = [msgCountSaved1._id]
-						User.update({
-							_id: userId
-						},{
-							userMsgCount: userMsgCountToSave
-						}, function(userErr, userresponse){
-
-							if (userErr) return callback(userErr);
-			                if (!userresponse) {
-			                    return callback(new Error('Channel message count update unsuccessful.'));
-			                }
-
-		                	let userMsgCountToSave2 = [msgCountSaved2._id]
-
-							User.update({
-								_id: queryString.message_user_ids
-							},{
-								userMsgCount: userMsgCountToSave2
-							}, function(userErr2, userresponse2){
-
-								if (userErr2) return callback(userErr2);
-				                if (!userresponse2) {
-				                    return callback(new Error('Channel message count update unsuccessful.'));
-				                }
-                				callback();
-                			});
-						});
-					});
-				},
-			], function(err, response) {
-				if(err){
-					// res.status(401).json({ message: 'Error with channel message input.' });
-					return next(err);
-				}							
-				return res.json(newChannel);
+			let msgCount2 = new MsgCount({
+				sender: queryString.message_user_ids,
+				recipient: userId,
+				channel: newChannel._id,
+				messageCount:0
 			});
 
 
+			const msgCountSaved1 = await msgCount.save(); 
+			allChannelUserMessageCount.push(msgCount._id);
+
+	    	if (!msgCountSaved1) {
+	    		throw new Error('Could not create new msgCount');
+	    	}
+			
+			const msgCountSaved2 = await msgCount2.save(); 
+			allChannelUserMessageCount.push(msgCount2._id);
+
+	    	if (!msgCountSaved2) {
+	    		throw new Error('Could not create new msgCount');
+	    	}
+
+	    	const newChannelUpdateRes = await Channel.update({
+											_id: newChannel._id
+										},{
+											userMsgCount:allChannelUserMessageCount
+										});
+
+            if (!newChannelUpdateRes) {
+                return callback(new Error('Channel message count update unsuccessful.'));
+            }
+
+            let userMsgCountToSave = [msgCountSaved1._id]
+			const userUpdateRes1 = await User.update({
+										_id: userId
+									},{
+										userMsgCount: userMsgCountToSave
+									});
+
+            if (!userUpdateRes1) {
+                return callback(new Error('Channel message count update unsuccessful.'));
+            }
+
+        	let userMsgCountToSave2 = [msgCountSaved2._id]
+
+			const userUpdateRes2 = await User.update({
+										_id: queryString.message_user_ids
+									},{
+										userMsgCount: userMsgCountToSave2
+									});
+
+            if (!userUpdateRes2) {
+                return callback(new Error('Channel message count update unsuccessful.'));
+            }
+
+			return res.json(newChannel);
+
 		} else if (channel) {
-			MsgCount.find({
+
+			const msgCountFromSender = await MsgCount.find({
 				channel:channel._id,
 				sender: userId,
 				recipient: queryString.message_user_ids
-			}, function(err, msgCountFromSender){
-                if (err) return callback(err);
+			});
 
-				MsgCount.update({
-					_id: msgCountFromSender[0]._id
-				},{
-					messageCount:0
-				}, function(err, response){
-					if (err) return callback(err);
-	                if (!response) {
-	                    return callback(new Error('Channel message count update unsuccessful.'));
-	                }
-					return res.json(channel);
-				});
+            if (!msgCountFromSender) {
+                throw new Error('MsgCount not found.');
+            }
 
-            });
-
+			const msgCountUpdateRes = MsgCount.update({
+											_id: msgCountFromSender[0]._id
+										},{
+											messageCount:0
+										});
+            if (!msgCountUpdateRes) {
+                throw new Error('Channel message count update unsuccessful.');
+            }
+			return res.json(channel);
     	}
-	});
+	} catch (error) {
+		console.log(error);
+		return next(error);
+	}
 }
 
 exports.getGroupChannel = (req, res) => {
