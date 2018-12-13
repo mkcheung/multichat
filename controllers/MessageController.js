@@ -194,59 +194,54 @@ exports.getMessagesInChannel = async (req, res) => {
 
 
 
-exports.resetMessageCount = (req, res) => {
+exports.resetMessageCount = async (req, res) => {
 
 	jwt.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode){
 			userId = decode._id;
 			userEmail = decode.email;
 		});
 
+	try {
+		if(req.body.msgCountId){
 
-	if(req.body.msgCountId){
-		MsgCount.findOne({
-			_id:req.body.msgCountId
-		}, function(err,msgCount){
+			const msgCount = await MsgCount.findOne({ _id:req.body.msgCountId });
+
 			if(!msgCount){
 				res.status(401).json({ message: 'MsgCount not found' });
-			} else if (msgCount) {
+			} 
 
-				MsgCount.update({
-					_id: req.body.msgCountId
-				},{
-					messageCount:0
-				}, function(err, response){
-					if(err){
-		        		res.status(401).json({ message: 'Error resetting message count.' });
-					}
-					return res.json(response);
-				});
-	    	}
-		});
-	} else if (req.body.channelId && req.body.recipientId){
-		console.log(req.body.channelId);
-		console.log(req.body.recipientId);
-		MsgCount.findOne({
-			channel:req.body.channelId,
-			recipient:req.body.recipientId
-		}, function(err,msgCount){
+			const msgCountUpdateResp = await MsgCount.update({
+				_id: req.body.msgCountId
+			},{
+				messageCount:0
+			});
+
+			return res.json(msgCountUpdateResp);
+		} else if (req.body.channelId && req.body.recipientId){
+
+
+			const msgCount = await MsgCount.findOne({
+				channel:req.body.channelId,
+				recipient:req.body.recipientId
+			});
 			if(!msgCount){
 				res.status(401).json({ message: 'MsgCount not found' });
-			} else if (msgCount) {
+			} 
 
-				MsgCount.update({
-					channel:req.body.channelId,
-					recipient:req.body.recipientId
-				},{
-					messageCount:0
-				}, function(err, response){
-					if(err){
-		        		res.status(401).json({ message: 'Error resetting message count.' });
-					}
-					return res.json(response);
-				});
-	    	}
-		});
+			const msgCountUpdateResp = await MsgCount.update({
+				channel:req.body.channelId,
+				recipient:req.body.recipientId
+			},{
+				messageCount:0
+			});
+
+			return res.json(msgCountUpdateResp);
+		}
+	} catch(error){
+		if(error){
+			console.log(error);
+    		res.status(401).json({ message: 'Error resetting message count.' });
+		}
 	}
-
 }
 
