@@ -311,41 +311,38 @@ exports.getGroupChannel = async (req, res) => {
 	return res.json(channel);
 }
 
-exports.addUserToChannel = (req, res) => {
+exports.addUserToChannel = async (req, res) => {
 
-
-	Channel.findOne({
-		_id:req.body.channelId
-	}, function(err,channel){
+	const channel = await Channel.findOne(
+					{ 
+						_id:req.body.channelId
+					});
+	try{
 		if(!channel){
 			res.status(401).json({ message: 'Channel not found' });
 		} else if (channel) {
 
 			// check to ensure that the requested users exist
-			User.find({
+			const users = await User.find({
 				_id:{ $in : req.body.userIds  }
-			}, function(err,users){
-				if(!users){
-					res.status(401).json({ message: 'Channel users not found' });
-				} 
 			});
+
+			if(!users){
+				res.status(401).json({ message: 'Channel users not found' });
+			} 
 
 			let newUsers = channel.channelUsers;
 			newUsers.push(req.body.userIds);
 
-			Channel.update({
+			const channelUpdateResults = await Channel.update({
 				_id: req.body.channelId
 			},{
 				channelUsers:newUsers
-			}, function(err,numAff, response){
-
-				if(err){
-	        		res.status(401).json({ message: 'Error adding users to channel.' });
-				}
-				return res.json(numAff);
 			});
 
-
-    	}
-	});
+			return res.json(channelUpdateResults);
+		}
+	} catch (error) {
+		res.status(401).json({ message: 'Error adding users to channel.' });
+	}
 }
