@@ -8,48 +8,40 @@ const jwt = require("jsonwebtoken");
 const url = require('url');
 var async = require('async');
 
-exports.createChannel = (req, res) => {
+exports.createChannel = async (req, res) => {
 
 	let userId = '';
 	jwt.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode){
 			userId = decode._id;
 		});
 
-	// check to ensure that the requested users exist
-	User.find({
-		_id:{ $in : req.body.channelUsers  }
-	}, function(err,users){
-		if(!users){
-			res.status(401).json({ message: 'Channel users not found.' });
-		} 
-	});
-
-
-	let createdGroupChannel = '';
 	let allChannelUserMessageCount = [];
 	let usersToChannel = req.body.channelUsers;
 	usersToChannel.push(userId);
 
+	const userDataSet = await User.find({
+		_id:{ $in : req.body.channelUsers  }
+	});
+    if (!userDataSet) {
+		res.status(401).json({ message: 'Channel users not found.' });
+    }
+
+	const newChannel = new Channel({
+		name: req.body.channelName,
+		channelUsers: usersToChannel,
+		type:req.body.type
+	});
+
+	const createdGroupChannel = await newChannel.save();
+
+	if(!createdGroupChannel){
+		throw new Error('Could not create channel.');
+	}
+
 	async.series([
-		function(callback){
+		function(callback){	
+			async.forEach(usersToChannel, async function (user, callback){
 
-			const newChannel = new Channel({
-				name: req.body.channelName,
-				channelUsers: usersToChannel,
-				type:req.body.type
-			});
-
-			newChannel.save(function(err,channel){
-				if(err){
-					return res.status(400).send(err);
-				}
-				createdGroupChannel = channel;
-        		callback();
-			});
-		},
-		function(callback){
-
-			async.forEach(usersToChannel, function (user, callback){
 
 				let msgCount = new MsgCount({
 					sender: user,
@@ -64,6 +56,7 @@ exports.createChannel = (req, res) => {
 					allChannelUserMessageCount.push(msgCount._id);
                 	callback();
 				});
+
 			}, function(err) {
 			    // if any of the file processing produced an error, err would equal that error
 			    if( err ) {
@@ -75,55 +68,63 @@ exports.createChannel = (req, res) => {
         			callback();
 			    }
 			});
-		},
-		function(callback){	
-			Channel.update({
-				_id: createdGroupChannel._id
-			},{
-				userMsgCount:allChannelUserMessageCount
-			}, function(err, response){
-				if(err){
-					return res.status(400).send(msgCountErr);
-				}
-            	callback();
-			});
-		},
-	], function(err, response) {
-			if(err){
-				return next(err);
-			}							
-		return res.json(createdGroupChannel);	
+			callback();
+		}
+	], function(err, numAff, response) {
+		if(err){
+			// res.status(401).json({ message: 'Error with channel message input.' });
+			return next(err);
+		}							
 	});
 
+
+	const chanUpdRes = Channel.update({
+		_id: createdGroupChannel._id
+	},{
+		userMsgCount:allChannelUserMessageCount
+	});
+
+	if(!chanUpdRes){
+		throw new Error('Count not update channel');
+	}
+	return res.json(createdGroupChannel);	
 } 
 
-exports.getUserChannels = (req, res) => {
+exports.getUserChannels = async (req, res) => {
 
 	let userId = ''
 	jwt.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode){
 			userId = decode._id;
 		});
 
-	Channel.find({
+	const channelData = await Channel.find({
 		channelUsers:userId
-	}, function(err,channels){
-		if(!channels){
-			res.status(401).json({ message: 'User has no channels' });
-		} else if (channels) {
-			return res.json(channels);
-    	}
 	});
+	if(!channelData){
+		res.status(401).json({ message: 'User has no channels' });
+	} else if (channelData) {
+		return res.json(channelData.data);
+	}
+
+	// Channel.find({
+	// 	channelUsers:userId
+	// }, function(err,channels){
+	// 	if(!channels){
+	// 		res.status(401).json({ message: 'User has no channels' });
+	// 	} else if (channels) {
+	// 		return res.json(channels);
+ //    	}
+	// });
 }
 
-exports.getGroupChannels = (req, res) => {
+exports.getGroupChannels = async (req, res) => {
 
 	let userId = ''
 	jwt.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode){
 			userId = decode._id;
 		});
 
-	Channel.find(
-	{ 
+	const channelData = await Channel.find({ 
 		'$and': 
 		[ 
 			{
@@ -133,13 +134,12 @@ exports.getGroupChannels = (req, res) => {
 				type:'group'  
 			}
 		] 
-	} , function(err,channels){
-		if(!channels){
-			res.status(401).json({ message: 'No group channels' });
-		} else if (channels) {
-			return res.json(channels);
-    	}
 	});
+	if(!channelData){
+		res.status(401).json({ message: 'No group channels' });
+	} else if (channelData) {
+		return res.json(channelData);
+	}
 }
 
 exports.getChannel = (req, res) => {

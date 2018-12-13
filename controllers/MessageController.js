@@ -238,10 +238,8 @@ exports.resetMessageCount = async (req, res) => {
 			return res.json(msgCountUpdateResp);
 		}
 	} catch(error){
-		if(error){
-			console.log(error);
-    		res.status(401).json({ message: 'Error resetting message count.' });
-		}
+		console.error(error);
+		res.status(401).json({ message: 'Error resetting message count.' });
 	}
 }
 
