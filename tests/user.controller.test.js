@@ -51,7 +51,8 @@ describe('User Controller', ()=> {
 			FakeUserClass = sandbox.stub().returns({save:saveStub});
 			UserController.__set__('User', FakeUserClass);
 			result = await UserController.register(req, res);
-		})
+		});
+
 	    afterEach(() => {
 			sandbox.restore();
 			UserController = rewire('../controllers/UserController');
@@ -184,6 +185,54 @@ describe('User Controller', ()=> {
 		// 	expect(result.status).to.equal(400);
   //       	expect(spy.calledOnce).to.equal(true);
 		// });
+	});
+
+	context('GET /users', ()=> {
+
+		let req;
+		let res;
+		let nextSpy;
+
+		beforeEach(() =>{
+
+	    	res = {
+		      status: (code) => {
+		        return {
+		          json: (response) => {
+		            return { status: code, response: response };
+		          }
+		        }
+		      }
+		    };
+
+			nextSpy = sinon.spy();
+		});
+
+	    afterEach(() => {
+			sandbox.restore();
+			UserController = rewire('../controllers/UserController');
+		});
+
+		it('should request a login if not so already', async () => {
+
+			req = { 
+				user:false
+			};
+
+	        let result = await UserController.loginRequired(req, res, nextSpy);
+			expect(result.status).to.equal(401);
+    		expect(result.response).to.have.property('message').to.equal('Please log in.');
+		});
+
+		it('should proceed if user is already logged in', async () => {
+
+			req = { 
+				user:true
+			};
+
+	        let result = await UserController.loginRequired(req, res, nextSpy);
+	        expect(nextSpy.calledOnce).to.be.true;
+		});
 	});
 
 
