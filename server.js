@@ -56,3 +56,5 @@ const io = socketIo(server);
 server.listen(port, () => console.log(`Listening on port ${port}`));
 
 socketEvents(io);
+
+module.exports = server;

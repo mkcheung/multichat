@@ -8,6 +8,10 @@ exports.getAllUsers = async (req, res) => {
 
 	let userId = '';
 	jwt.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode){
+			if(err){
+				return res.status(401).json({ message: 'Authorization required.' });
+			}
+
 			userId = decode._id;
 		});
 
@@ -55,7 +59,7 @@ exports.login = async (req, res) => {
 			return res.status(401).json({ message: authFailedMsg });
 		}
 
-		if (!userToLogIn.comparePassword(req.body.password)) {
+		if ( !(await userToLogIn.comparePassword(req.body.password))) {
         	return res.status(401).json({ message: authFailedMsg });
 		} else {
 			return res.json({userid:userToLogIn._id ,token: jwt.sign({ email: userToLogIn.email, fullName: userToLogIn.firstName + ' ' + userToLogIn.lastName, _id: userToLogIn._id}, 'RESTFULAPIs')});
