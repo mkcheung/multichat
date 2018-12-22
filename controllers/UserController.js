@@ -38,7 +38,6 @@ exports.register = async (req, res) => {
 		loggedIn: false,
 		hashPassword: hashedPw
 	});
-
 	try {
 
 		const newUserResult = await newUser.save();
