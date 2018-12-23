@@ -6,20 +6,17 @@ const jwt = require("jsonwebtoken");
 
 exports.getAllUsers = async (req, res) => {
 
-	let userId = '';
-	jwt.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs', function(err, decode){
-			if(err){
-				return res.status(401).json({ message: 'Authorization required.' });
-			}
-
-			userId = decode._id;
-		});
+	const decode = await jwt.verify(req.headers.authorization.split(' ')[1], 'RESTFULAPIs');
+	
+	if(!decode){
+		return res.status(401).json({ message: 'Authorization required.' });
+	}
 
 	try {
 
 		const users = await User.find({});
 		if(!users){
-			res.status(401).json({ message: 'No users.' });
+			return res.status(401).json({ message: 'No users.' });
 		} else {
 			return res.json(users);
 		}

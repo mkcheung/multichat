@@ -157,34 +157,6 @@ describe('User Controller', ()=> {
     		expect(result.response).to.have.property('userid').to.equal(userToLogin._id);
     		expect(result.response).to.have.property('token').to.equal(userToLogin.token);
 		});
-
-		// it('should throw an exception if an issue occurs', async () => {
-
-		// 	let spy = sinon.spy();
-		// 	userToLogin = {
-		// 		_id:null,
-		// 		email:'foo@bar.gmail.com',
-		// 		firstName:'foo',
-		// 		lastName:'bar',
-		// 		token:'faeae',
-		// 		comparePassword: sandbox.stub().throws('randomError')
-		// 	};
-
-		// 	res = {
-		// 		status: (code) => {
-		// 			return {
-		// 				send: (error) => {
-		// 					return { status: code, response: response };
-		// 				}
-		// 			}
-		// 		}
-		// 	};
-
-  //       	sandbox.stub(User, 'findOne').resolves(userToLogin);
-	 //        let result = await UserController.login(req, res);
-		// 	expect(result.status).to.equal(400);
-  //       	expect(spy.calledOnce).to.equal(true);
-		// });
 	});
 
 	context('GET /users', ()=> {
@@ -233,7 +205,86 @@ describe('User Controller', ()=> {
 	        let result = await UserController.loginRequired(req, res, nextSpy);
 	        expect(nextSpy.calledOnce).to.be.true;
 		});
+
+		it('should fail getting all users if jwt verification fails', async () => {
+
+		    let jwtMock = {
+		    	verify:function(){
+		    		return false;
+		    	}
+		    }
+
+			req = { 
+				headers:{
+					authorization:{
+						split:function(){
+							return ['1', true];
+						}
+					}
+				}
+			};
+
+			UserController.__set__('jwt',jwtMock)
+
+	        let result = await UserController.getAllUsers(req, res);
+			expect(result.status).to.equal(401);
+    		expect(result.response).to.have.property('message').to.equal('Authorization required.');
+		});
+
+		it('should fail getting all users if there are none', async () => {
+
+		    let jwtMock = {
+		    	verify:function(){
+		    		return true;
+		    	}
+		    }
+
+			req = { 
+				headers:{
+					authorization:{
+						split:function(){
+							return ['1', true];
+						}
+					}
+				}
+			};
+
+        	sandbox.stub(User, 'find').resolves(false);
+			UserController.__set__('jwt',jwtMock)
+
+	        let result = await UserController.getAllUsers(req, res);
+			expect(result.status).to.equal(401);
+    		expect(result.response).to.have.property('message').to.equal('No users.');
+		});
+
+		it('should return users', async () => {
+
+		    let jwtMock = {
+		    	verify:function(){
+		    		return true;
+		    	}
+		    }
+
+			req = { 
+				headers:{
+					authorization:{
+						split:function(){
+							return ['1', true];
+						}
+					}
+				}
+			};
+
+			let resJsonSpy = sinon.spy();
+			res = { 
+				json:resJsonSpy
+			};
+
+        	sandbox.stub(User, 'find').resolves(true);
+			UserController.__set__('jwt',jwtMock)
+
+	        let result = await UserController.getAllUsers(req, res);
+	        expect(resJsonSpy.calledOnce).to.be.true;
+		});
 	});
-
-
 })
